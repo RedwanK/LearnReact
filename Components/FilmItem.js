@@ -5,14 +5,27 @@ import { StyleSheet, View, Text, Image, TouchableOpacity } from 'react-native'
 import { getImageFromAPI } from '../API/api_conf'
 
 class FilmItem extends React.Component {
+
+    _displayFavoriteImage() {
+        if (this.props.isFilmFavorite) {
+            // Si la props isFilmFavorite vaut true, on affiche le 🖤
+            return (
+                <Image
+                    style={styles.favorite_image}
+                    source={require('../assets/fav.png')}
+                />
+            )
+        }
+    }
+
   render() {
     const film = this.props.film;
-    const displayFilmDetail = this.props.displayFilmDetail
+    const displayFilmDetail = this.props.displayFilmDetail;
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
           style={styles.mainContainer}
           onPress={() => displayFilmDetail(film.id)}>
-          <Image 
+          <Image
             style={styles.filmImage}
             source={{uri: getImageFromAPI(film.poster_path)}}
           />
@@ -25,7 +38,9 @@ class FilmItem extends React.Component {
                 <Text style={styles.descriptionText} numberOfLines={6}>{film.overview}</Text>
             </View>
             <View style={styles.descriptionFooter}>
-                <Text style={styles.dateText}>Sorti le {film.release_date}</Text>
+
+                <Text style={styles.dateText}>
+                    {this._displayFavoriteImage()} Sorti le {film.release_date}</Text>
             </View>
           </View>
       </TouchableOpacity>
@@ -56,7 +71,7 @@ const styles = StyleSheet.create({
   },
   descriptionContent: {
       flex: 7
-  }, 
+  },
   descriptionFooter: {
       flex: 1
   },
@@ -78,6 +93,10 @@ const styles = StyleSheet.create({
   dateText: {
       textAlign: 'right',
       fontSize: 14
+  },
+  favorite_image: {
+      width: 15,
+      height: 15
   }
 });
 

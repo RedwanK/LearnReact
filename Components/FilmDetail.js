@@ -1,7 +1,7 @@
 //Components/FilmDetail.js
 
 import React from 'react';
-import {StyleSheet, View, Text, ScrollView, ActivityIndicator} from  'react-native';
+import {StyleSheet, View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Image} from  'react-native';
 import { Card, Badge } from 'react-native-elements';
 import {getFilmDetail, getImageFromAPI} from '../API/api_conf';
 import moment from 'moment';
@@ -25,6 +25,11 @@ class FilmDetail extends React.Component {
         }
     }
 
+    _toggleFavorite() {
+        const action = { type: "TOGGLE_FAVORITE", value: this.state.film };
+        this.props.dispatch(action);
+    }
+
     componentDidMount() {
         getFilmDetail(this.props.navigation.state.params.id).then(data => {
             this.setState({
@@ -32,6 +37,11 @@ class FilmDetail extends React.Component {
                 isLoading: false
             });
         })
+    }
+
+    componentDidUpdate() {
+        console.log("componentDidUpdate : ");
+        console.log(this.props.favoritesFilm);
     }
 
     _displayLoading() {
@@ -42,6 +52,20 @@ class FilmDetail extends React.Component {
                 </View>
             );
         }
+    }
+
+    _displayFavoriteImage() {
+        var sourceImage = require('../assets/nofav.png');
+        if (this.props.favoritesFilm.findIndex(item => item.id === this.state.film.id) !== -1) {
+            // Film dans nos favoris
+            sourceImage = require('../assets/fav.png')
+        }
+        return (
+            <Image
+                style={styles.favorite_image}
+                source={sourceImage}
+            />
+        )
     }
 
     _displayFilm() {
@@ -66,12 +90,17 @@ class FilmDetail extends React.Component {
                             </View>
                         </View>
                         <View style={styles.popularityContainer}>
+                            <TouchableOpacity
+                                style={styles.favorite}
+                                onPress={() => this._toggleFavorite()}>
+                                {this._displayFavoriteImage()}
+                            </TouchableOpacity>
                             <Text style={styles.popularity}>Recommandé à {film.popularity}%</Text>
                         </View>
                         <Text style={styles.descriptionText}>
                             {film.overview}
                         </Text>
-                        
+
                         <View style={styles.extraInfo}>
                             <View style={styles.infoLine}>
                                 <Text style={styles.infoLineHeader}>
@@ -81,7 +110,7 @@ class FilmDetail extends React.Component {
                                     {
                                         film.production_companies.map((value, key) => (
                                             <Text style={styles.infoLineInfo}>
-                                                {value.name} 
+                                                {value.name}
                                             </Text>
                                         ))
                                     }
@@ -92,7 +121,7 @@ class FilmDetail extends React.Component {
                                     Date de sortie
                                 </Text>
                                 <Text style={styles.infoLineInfo}>
-                                    {moment(new Date(film.release_date)).format('DD/MM/YYYY')} 
+                                    {moment(new Date(film.release_date)).format('DD/MM/YYYY')}
                                 </Text>
                             </View>
 
@@ -113,7 +142,7 @@ class FilmDetail extends React.Component {
                                 </Text>
                             </View>
                         </View>
-                        
+
                     </Card>
                 </ScrollView>
             );
@@ -167,7 +196,7 @@ const styles = StyleSheet.create({
         flex: 3,
         flexDirection: "row",
         justifyContent: "flex-start",
-        
+
     },
     genreBadge: {
         padding: 6,
@@ -230,7 +259,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         textAlign: 'right'
+    },
+    favorite_image: {
+        width: 30,
+        height: 30
+    },
+    favorite: {
+        flex : 1
     }
-}); 
+});
 
 export default connect(mapStateToProps)(FilmDetail)

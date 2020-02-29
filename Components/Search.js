@@ -2,7 +2,15 @@
 import React from 'react';
 import { StyleSheet, View, TextInput, TouchableOpacity, Text, FlatList, ActivityIndicator } from 'react-native';
 import FilmItem from './FilmItem';
-import { searchFilmsFromAPI } from '../API/api_conf'
+import { searchFilmsFromAPI } from '../API/api_conf';
+import { connect } from 'react-redux';
+
+// On connecte le store Redux, ainsi que les films favoris du state de notre application, à notre component Search
+const mapStateToProps = state => {
+    return {
+        favoritesFilm: state.favoritesFilm
+    }
+};
 
 class Search extends React.Component {
     constructor(props) {
@@ -26,7 +34,7 @@ class Search extends React.Component {
     }
 
     _loadFilms() {
-        if(this._searchInputTextChanged.length > 0) {
+        if(this.inputText.length > 0) {
             this.setState({isLoading: true});
             searchFilmsFromAPI(this.inputText, this.currentPage+1).then(data => {
                 this.currentPage = data.page;
@@ -41,6 +49,7 @@ class Search extends React.Component {
 
     _searchInputTextChanged(text) {
         this.inputText = text;
+        this._searchFilms();
     }
 
     _displayLoading() {
@@ -61,8 +70,8 @@ class Search extends React.Component {
     _displayFilmDetail = (id) => {
         console.log("Display Detail id : "+id);
         this.props.navigation.navigate("FilmDetail", {id: id});
-    }
-   
+    };
+
 
     render() {
         return (
@@ -74,17 +83,16 @@ class Search extends React.Component {
                     onChangeText={(text) => this._searchInputTextChanged(text)}
                     onSubmitEditing={() => this._searchFilms()}
                     />
-                    <TouchableOpacity 
-                    style={styles.buttonFind} 
-                    onPress={() => this._searchFilms()}
-                    >
-                        <Text style={styles.buttonText}>Chercher</Text>
-                    </TouchableOpacity>    
                 </View>
                  <FlatList
                     data={this.state.films}
+                    extraData={this.props.favoritesFilm}
                     keyExtractor={(item) => item.id.toString()}
-                    renderItem={({item}) => <FilmItem film={item} displayFilmDetail={this._displayFilmDetail} />}
+                    renderItem={({item}) => <FilmItem
+                        film={item}
+                        displayFilmDetail={this._displayFilmDetail}
+                        isFilmFavorite={(this.props.favoritesFilm.findIndex(film => film.id === item.id) !== -1)}
+                    />}
                     onEndReachedThreshold={0.5}
                     onEndReached={() => this._loadNextFilms()}
                  />
@@ -100,13 +108,13 @@ const styles = StyleSheet.create({
         marginBottom: 20
     },
     textInput: {
-        marginLeft: 5, 
-        marginRight: 5, 
-        height: 50, 
-        borderColor: '#000000', 
-        borderWidth: 1, 
+        marginLeft: 5,
+        marginRight: 5,
+        height: 50,
+        borderColor: '#000000',
+        borderWidth: 1,
         paddingLeft: 5,
-        flex: 7 
+        flex: 7
     },
     loadingContainer: {
         position: "absolute",
@@ -136,4 +144,4 @@ const styles = StyleSheet.create({
     }
 });
 
-export default Search
+export default connect(mapStateToProps)(Search)
