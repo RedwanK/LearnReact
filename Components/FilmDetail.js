@@ -1,18 +1,18 @@
 //Components/FilmDetail.js
 
 import React from 'react';
-import {StyleSheet, View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Image} from  'react-native';
-import { Card, Badge } from 'react-native-elements';
+import {StyleSheet, View, Text, ScrollView, ActivityIndicator, TouchableOpacity, Image, Share} from 'react-native';
+import {Card} from 'react-native-elements';
 import {getFilmDetail, getImageFromAPI} from '../API/api_conf';
 import moment from 'moment';
 import numeral from 'numeral';
-import { connect } from 'react-redux';
+import {connect} from 'react-redux';
 
 const mapStateToProps = (state) => {
     return {
         favoritesFilm: state.favoritesFilm
-      }
-}
+    }
+};
 
 class FilmDetail extends React.Component {
     constructor(props) {
@@ -25,27 +25,50 @@ class FilmDetail extends React.Component {
         }
     }
 
+    _shareFilm() {
+        const { film } = this.state;
+        Share.share({ title: film.title, message: film.overview })
+    }
+
+    _displayFloatingActionButton() {
+        const { film } = this.state;
+        if (film != undefined && Platform.OS === 'android') { // Uniquement sur Android et lorsque le film est chargé
+            return (
+                <TouchableOpacity
+                    style={styles.share_touchable_floatingactionbutton}
+                    onPress={() => this._shareFilm()}>
+                    <Image
+                        style={styles.share_image}
+                        source={require('../assets/share.png')} />
+                </TouchableOpacity>
+            )
+        }
+    }
+
     _toggleFavorite() {
-        const action = { type: "TOGGLE_FAVORITE", value: this.state.film };
+        const action = {type: "TOGGLE_FAVORITE", value: this.state.film};
         this.props.dispatch(action);
     }
 
     componentDidMount() {
-        getFilmDetail(this.props.navigation.state.params.id).then(data => {
+        const favoriteFilmIndex = this.props.favoritesFilm.findIndex(item => item.id === this.props.route.params.id);
+        if (favoriteFilmIndex !== -1) {
             this.setState({
-                film: data,
-                isLoading: false
-            });
-        })
-    }
-
-    componentDidUpdate() {
-        console.log("componentDidUpdate : ");
-        console.log(this.props.favoritesFilm);
+                              film: this.props.favoritesFilm[favoriteFilmIndex],
+                              isLoading: false
+                          });
+        } else {
+            getFilmDetail(this.props.route.params.id).then(data => {
+                this.setState({
+                                  film: data,
+                                  isLoading: false
+                              });
+            })
+        }
     }
 
     _displayLoading() {
-        if(this.state.isLoading) {
+        if (this.state.isLoading) {
             return (
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large"/>
@@ -74,8 +97,8 @@ class FilmDetail extends React.Component {
             return (
                 <ScrollView style={styles.scrollviewContainer}>
                     <Card
-                    title={film.original_title}
-                    image={{uri: getImageFromAPI(film.backdrop_path)}}>
+                        title={film.original_title}
+                        image={{uri: getImageFromAPI(film.backdrop_path)}}>
                         <View style={styles.infobar}>
                             <View style={styles.genresContainer}>
                                 {
@@ -155,118 +178,134 @@ class FilmDetail extends React.Component {
             <View style={styles.mainContainer}>
                 {this._displayLoading()}
                 {this._displayFilm()}
+                {this._displayFloatingActionButton()}
             </View>
         );
     }
 }
 
 const styles = StyleSheet.create({
-    mainContainer: {
-        flex: 1
-    },
-    loadingContainer: {
-        position: "absolute",
-        left: 0,
-        right: 0,
-        top: 0,
-        bottom: 0,
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'white',
-        opacity: 0.7
-    },
-    scrollviewContainer: {
-        flex: 1
-    },
-    descriptionText: {
-        fontStyle: 'italic',
-        color: "#666666",
-        textAlign: "justify"
-    },
-    infobar: {
-        flex: 1,
-        flexDirection: "row",
-        borderBottomWidth: 1,
-        borderStyle: 'solid',
-        borderColor: "#999999",
-        paddingBottom: 10,
-        marginBottom: 10
-    },
-    genresContainer: {
-        flex: 3,
-        flexDirection: "row",
-        justifyContent: "flex-start",
+     mainContainer: {
+         flex: 1
+     },
+     loadingContainer: {
+         position: "absolute",
+         left: 0,
+         right: 0,
+         top: 0,
+         bottom: 0,
+         alignItems: 'center',
+         justifyContent: 'center',
+         backgroundColor: 'white',
+         opacity: 0.7
+     },
+     scrollviewContainer: {
+         flex: 1
+     },
+     descriptionText: {
+         fontStyle: 'italic',
+         color: "#666666",
+         textAlign: "justify"
+     },
+     infobar: {
+         flex: 1,
+         flexDirection: "row",
+         borderBottomWidth: 1,
+         borderStyle: 'solid',
+         borderColor: "#999999",
+         paddingBottom: 10,
+         marginBottom: 10
+     },
+     genresContainer: {
+         flex: 3,
+         flexDirection: "row",
+         justifyContent: "flex-start",
 
-    },
-    genreBadge: {
-        padding: 6,
-        color: '#999999',
-        borderStyle: 'solid',
-        borderColor: '#999999',
-        borderWidth: 1,
-        borderRadius: 20,
-        marginRight: 4,
-        textAlign: "center",
-        fontSize: 10
-    },
-    noteContainer: {
-        flex: 2,
-        flexDirection: "row",
-        justifyContent: 'flex-end',
-        alignItems: 'center'
-    },
-    voteCount:{
-        fontSize: 10,
-        color : "#999999",
-        fontStyle: 'italic'
-    },
-    note: {
-        fontWeight: 'bold',
-        color: "#666666"
-    },
-    badge: {
-        backgroundColor: 'gray'
-    },
-    popularityContainer: {
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'flex-end'
-    },
-    popularity: {
-        color: "#999999",
-        fontWeight: 'bold',
-        fontSize: 20,
-        marginBottom: 10
-    },
-    infoLine: {
-        flex: 1,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        borderBottomWidth: 1,
-        borderStyle: 'solid',
-        borderColor: "#999999",
-        marginBottom: 5
-    },
-    infoLineHeader: {
-        fontWeight: 'bold',
-        fontSize: 15,
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    infoLineInfo: {
-        fontSize: 15,
-        justifyContent: 'center',
-        alignItems: 'center',
-        textAlign: 'right'
-    },
-    favorite_image: {
-        width: 30,
-        height: 30
-    },
-    favorite: {
-        flex : 1
-    }
+     },
+     genreBadge: {
+         padding: 6,
+         color: '#999999',
+         borderStyle: 'solid',
+         borderColor: '#999999',
+         borderWidth: 1,
+         borderRadius: 20,
+         marginRight: 4,
+         textAlign: "center",
+         fontSize: 10
+     },
+     noteContainer: {
+         flex: 2,
+         flexDirection: "row",
+         justifyContent: 'flex-end',
+         alignItems: 'center'
+     },
+     voteCount: {
+         fontSize: 10,
+         color: "#999999",
+         fontStyle: 'italic'
+     },
+     note: {
+         fontWeight: 'bold',
+         color: "#666666"
+     },
+     badge: {
+         backgroundColor: 'gray'
+     },
+     popularityContainer: {
+         flex: 1,
+         flexDirection: 'row',
+         justifyContent: 'flex-end'
+     },
+     popularity: {
+         color: "#999999",
+         fontWeight: 'bold',
+         fontSize: 20,
+         marginBottom: 10
+     },
+     infoLine: {
+         flex: 1,
+         flexDirection: 'row',
+         justifyContent: 'space-between',
+         alignItems: 'center',
+         borderBottomWidth: 1,
+         borderStyle: 'solid',
+         borderColor: "#999999",
+         marginBottom: 5
+     },
+     infoLineHeader: {
+         fontWeight: 'bold',
+         fontSize: 15,
+         justifyContent: 'center',
+         alignItems: 'center'
+     },
+     infoLineInfo: {
+         fontSize: 15,
+         justifyContent: 'center',
+         alignItems: 'center',
+         textAlign: 'right'
+     },
+     favorite_image: {
+         width: 30,
+         height: 30
+     },
+     favorite: {
+         flex: 1
+     },
+     share_touchable_floatingactionbutton: {
+         position: 'absolute',
+         width: 50,
+         height: 50,
+         bottom: 20,
+         right: 20,
+         borderRadius: 30,
+         backgroundColor: '#444444',
+         justifyContent: 'center',
+         alignItems: 'center'
+     },
+     share_image: {
+         width: 25,
+         height: 25
+     }
 });
 
 export default connect(mapStateToProps)(FilmDetail)
